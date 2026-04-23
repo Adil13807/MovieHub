@@ -1,48 +1,72 @@
 package com.example.moviehub;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class AuthService {
-    private final Map<String, User> users = new HashMap<>();
     private User currentUser;
 
-    private final Path usersFile = Paths.get("data", "users.txt");
-
     public AuthService() {
-        loadUsers();
+        DatabaseManager.getInstance();
         seedAdmins();
-        saveUsers();
     }
 
     public boolean register(String username, String password) {
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             return false;
         }
-        if (users.containsKey(username)) {
+
+        username = username.trim();
+        password = password.trim();
+
+        if (userExists(username)) {
             return false;
         }
 
-        User user = new User(username.trim(), password.trim(), User.Role.USER);
-        users.put(user.getUsername(), user);
-        currentUser = user;
-        saveUsers();
-        return true;
+        String sql = "INSERT INTO users(username, password, role) VALUES(?, ?, ?)";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            ps.setString(3, User.Role.USER.name());
+            ps.executeUpdate();
+
+            currentUser = new User(username, password, User.Role.USER);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean login(String username, String password) {
-        User user = users.get(username);
-        if (user == null) {
+        String sql = "SELECT username, password, role FROM users WHERE username = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+
+                if (!rs.getString("password").equals(password)) {
+                    return false;
+                }
+
+                currentUser = new User(
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        User.Role.valueOf(rs.getString("role"))
+                );
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
             return false;
         }
-        if (!user.getPassword().equals(password)) {
-            return false;
-        }
-        currentUser = user;
-        return true;
     }
 
     public User getCurrentUser() {
@@ -53,6 +77,20 @@ public class AuthService {
         return currentUser != null && currentUser.getRole() == User.Role.ADMIN;
     }
 
+    private boolean userExists(String username) {
+        String sql = "SELECT 1 FROM users WHERE username = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private void seedAdmins() {
         addAdminIfMissing("admin1", "admin123");
         addAdminIfMissing("admin2", "admin123");
@@ -60,49 +98,18 @@ public class AuthService {
     }
 
     private void addAdminIfMissing(String username, String password) {
-        users.putIfAbsent(username, new User(username, password, User.Role.ADMIN));
-    }
-
-    private void loadUsers() {
-        try {
-            if (!Files.exists(usersFile)) {
-                Files.createDirectories(usersFile.getParent());
-                return;
-            }
-
-            List<String> lines = Files.readAllLines(usersFile);
-            for (String line : lines) {
-                if (line.isBlank()) continue;
-
-                String[] parts = line.split(";");
-                if (parts.length == 3) {
-                    String username = parts[0];
-                    String password = parts[1];
-                    User.Role role = User.Role.valueOf(parts[2]);
-                    users.put(username, new User(username, password, role));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (userExists(username)) {
+            return;
         }
-    }
 
-    private void saveUsers() {
-        try {
-            Files.createDirectories(usersFile.getParent());
-
-            StringBuilder sb = new StringBuilder();
-            for (User user : users.values()) {
-                sb.append(user.getUsername())
-                        .append(";")
-                        .append(user.getPassword())
-                        .append(";")
-                        .append(user.getRole())
-                        .append(System.lineSeparator());
-            }
-
-            Files.writeString(usersFile, sb.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
+        String sql = "INSERT INTO users(username, password, role) VALUES(?, ?, ?)";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            ps.setString(3, User.Role.ADMIN.name());
+            ps.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }

@@ -1,164 +1,138 @@
 package com.example.moviehub;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class UserDataService {
 
-    private final Path baseDir = Paths.get("data", "users");
+    public void addToFavorites(String username, String movieTitle) {
+        executeInsertIgnore("INSERT OR IGNORE INTO favorites(username, movie_title) VALUES(?, ?)", username, movieTitle);
+    }
 
-    public UserDataService() {
-        try {
-            Files.createDirectories(baseDir);
-        } catch (IOException e) {
+    public void addToWatchLater(String username, String movieTitle) {
+        executeInsertIgnore("INSERT OR IGNORE INTO watch_later(username, movie_title) VALUES(?, ?)", username, movieTitle);
+    }
+
+    public void addToHistory(String username, String movieTitle) {
+        String sql = "INSERT INTO history(username, movie_title) VALUES(?, ?)";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, movieTitle);
+            ps.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private String safeName(String username) {
-        return username.replaceAll("[^a-zA-Z0-9._-]", "_");
-    }
-
-    private Path favoritesFile(String username) {
-        return baseDir.resolve(safeName(username) + "_favorites.txt");
-    }
-
-    private Path watchLaterFile(String username) {
-        return baseDir.resolve(safeName(username) + "_watch_later.txt");
-    }
-
-    private Path ratingsFile(String username) {
-        return baseDir.resolve(safeName(username) + "_ratings.txt");
-    }
-
-    private Path historyFile(String username) {
-        return baseDir.resolve(safeName(username) + "_history.txt");
-    }
-
-    public void addToFavorites(String username, String movieTitle) {
-        appendUnique(favoritesFile(username), movieTitle);
-    }
-
-    public void addToWatchLater(String username, String movieTitle) {
-        appendUnique(watchLaterFile(username), movieTitle);
-    }
-
-    public void addToHistory(String username, String movieTitle) {
-        appendLine(historyFile(username), movieTitle);
-    }
-
     public void saveRating(String username, String movieTitle, double rating) {
-        Map<String, String> ratings = loadKeyValueFile(ratingsFile(username));
-        ratings.put(movieTitle, String.valueOf(rating));
-        saveKeyValueFile(ratingsFile(username), ratings);
+        String sql = """
+            INSERT INTO ratings(username, movie_title, rating)
+            VALUES(?, ?, ?)
+            ON CONFLICT(username, movie_title) DO UPDATE SET rating = excluded.rating
+        """;
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, movieTitle);
+            ps.setDouble(3, rating);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void removeFromFavorites(String username, String movieTitle) {
-        removeLine(favoritesFile(username), movieTitle);
+        deletePair("DELETE FROM favorites WHERE username = ? AND movie_title = ?", username, movieTitle);
     }
 
     public void removeFromWatchLater(String username, String movieTitle) {
-        removeLine(watchLaterFile(username), movieTitle);
+        deletePair("DELETE FROM watch_later WHERE username = ? AND movie_title = ?", username, movieTitle);
     }
 
     public void clearHistory(String username) {
-        try {
-            Files.deleteIfExists(historyFile(username));
-        } catch (IOException e) {
+        String sql = "DELETE FROM history WHERE username = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     public List<String> loadFavorites(String username) {
-        return readLines(favoritesFile(username));
+        return loadMovieTitles("SELECT movie_title FROM favorites WHERE username = ? ORDER BY movie_title", username);
     }
 
     public List<String> loadWatchLater(String username) {
-        return readLines(watchLaterFile(username));
+        return loadMovieTitles("SELECT movie_title FROM watch_later WHERE username = ? ORDER BY movie_title", username);
     }
 
     public List<String> loadHistory(String username) {
-        return readLines(historyFile(username));
+        return loadMovieTitles("SELECT movie_title FROM history WHERE username = ? ORDER BY id DESC", username);
     }
 
     public Map<String, String> loadRatings(String username) {
-        return loadKeyValueFile(ratingsFile(username));
-    }
+        Map<String, String> map = new LinkedHashMap<>();
+        String sql = "SELECT movie_title, rating FROM ratings WHERE username = ? ORDER BY movie_title";
 
-    private void removeLine(Path file, String value) {
-        try {
-            List<String> lines = readLines(file);
-            lines.removeIf(line -> line.equals(value));
-            Files.write(file, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void appendUnique(Path file, String value) {
-        try {
-            List<String> lines = readLines(file);
-            if (!lines.contains(value)) {
-                lines.add(value);
-                Files.write(file, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void appendLine(Path file, String value) {
-        try {
-            Files.write(file,
-                    List.of(value),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private List<String> readLines(Path file) {
-        try {
-            if (!Files.exists(file)) {
-                return new ArrayList<>();
-            }
-            return new ArrayList<>(Files.readAllLines(file));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-    private Map<String, String> loadKeyValueFile(Path file) {
-        Map<String, String> map = new HashMap<>();
-        try {
-            if (!Files.exists(file)) {
-                return map;
-            }
-            for (String line : Files.readAllLines(file)) {
-                if (line.isBlank()) continue;
-                String[] parts = line.split(";", 2);
-                if (parts.length == 2) {
-                    map.put(parts[0], parts[1]);
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    map.put(rs.getString("movie_title"), String.valueOf(rs.getDouble("rating")));
                 }
             }
-        } catch (IOException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return map;
     }
 
-    private void saveKeyValueFile(Path file, Map<String, String> map) {
-        try {
-            List<String> lines = new ArrayList<>();
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                lines.add(entry.getKey() + ";" + entry.getValue());
-            }
-            Files.write(file, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
+    private void executeInsertIgnore(String sql, String username, String movieTitle) {
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, movieTitle);
+            ps.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private void deletePair(String sql, String username, String movieTitle) {
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, movieTitle);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<String> loadMovieTitles(String sql, String username) {
+        List<String> list = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(rs.getString(1));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

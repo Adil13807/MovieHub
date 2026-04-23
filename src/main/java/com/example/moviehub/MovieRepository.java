@@ -1,16 +1,18 @@
 package com.example.moviehub;
 
-import java.io.IOException;
-import java.nio.file.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MovieRepository {
 
     private static final List<Movie> movies = new ArrayList<>();
-    private static final Path moviesFile = Paths.get("data", "movies.txt");
 
     static {
+        DatabaseManager.getInstance();
         loadMovies();
         if (movies.isEmpty()) {
             seedDefaultMovies();
@@ -62,45 +64,22 @@ public class MovieRepository {
     }
 
     private static void loadMovies() {
-        try {
-            if (!Files.exists(moviesFile)) {
-                Files.createDirectories(moviesFile.getParent());
-                return;
+        String sql = "SELECT title, genre, year, rating, description, video_path FROM movies";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                movies.add(new Movie(
+                        rs.getString("title"),
+                        rs.getString("genre"),
+                        rs.getInt("year"),
+                        rs.getDouble("rating"),
+                        rs.getString("description"),
+                        rs.getString("video_path")
+                ));
             }
-
-            List<String> lines = Files.readAllLines(moviesFile);
-            for (String line : lines) {
-                if (line.isBlank()) continue;
-                String[] parts = line.split(";", 6);
-                if (parts.length == 6) {
-                    movies.add(new Movie(
-                            parts[0],
-                            parts[1],
-                            intParse(parts[2], 2000),
-                            doubleParse(parts[3], 0.0),
-                            parts[4],
-                            parts[5]
-                    ));
-                }
-            }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
-        }
-    }
-
-    private static int intParse(String value, int def) {
-        try {
-            return Integer.parseInt(value);
-        } catch (Exception e) {
-            return def;
-        }
-    }
-
-    private static double doubleParse(String value, double def) {
-        try {
-            return Double.parseDouble(value);
-        } catch (Exception e) {
-            return def;
         }
     }
 
@@ -127,23 +106,34 @@ public class MovieRepository {
     }
 
     public static void saveMovies() {
-        try {
-            Files.createDirectories(moviesFile.getParent());
+        String deleteSql = "DELETE FROM movies";
+        String insertSql = """
+            INSERT INTO movies(title, genre, year, rating, description, video_path)
+            VALUES(?, ?, ?, ?, ?, ?)
+        """;
 
-            List<String> lines = new ArrayList<>();
-            for (Movie movie : movies) {
-                lines.add(
-                        movie.getTitle() + ";" +
-                                movie.getGenre() + ";" +
-                                movie.getYear() + ";" +
-                                movie.getRating() + ";" +
-                                movie.getDescription() + ";" +
-                                movie.getVideoPath()
-                );
+        try (Connection conn = DatabaseManager.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                deleteStmt.executeUpdate();
             }
 
-            Files.write(moviesFile, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                for (Movie movie : movies) {
+                    insertStmt.setString(1, movie.getTitle());
+                    insertStmt.setString(2, movie.getGenre());
+                    insertStmt.setInt(3, movie.getYear());
+                    insertStmt.setDouble(4, movie.getRating());
+                    insertStmt.setString(5, movie.getDescription());
+                    insertStmt.setString(6, movie.getVideoPath());
+                    insertStmt.addBatch();
+                }
+                insertStmt.executeBatch();
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
