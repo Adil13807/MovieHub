@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.moviehub.AdminController"
+            prefWidth="1100.0" prefHeight="700.0">
+
+    <top>
+        <VBox spacing="10" style="-fx-padding: 18; -fx-background-color: #1f2937;">
+            <Label text="MovieHub - Admin" style="-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold;"/>
+        </VBox>
+    </top>
+
+    <left>
+        <VBox spacing="10" style="-fx-padding: 15; -fx-background-color: #f3f4f6;" prefWidth="360">
+            <Label text="Список фильмов" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <ListView fx:id="movieListView" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="10" style="-fx-padding: 20;">
+            <Label text="Добавить / Редактировать фильм" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+
+            <TextField fx:id="titleField" promptText="Название"/>
+            <TextField fx:id="genreField" promptText="Жанр"/>
+            <TextField fx:id="yearField" promptText="Год"/>
+            <TextField fx:id="ratingField" promptText="Рейтинг"/>
+            <TextArea fx:id="descriptionField" promptText="Описание" prefRowCount="5"/>
+            <TextField fx:id="videoPathField" promptText="Путь к видео"/>
+
+            <HBox spacing="10">
+                <Button text="Добавить фильм" onAction="#onAddMovieClicked"/>
+                <Button text="Редактировать фильм" onAction="#onEditMovieClicked"/>
+                <Button text="Удалить фильм" onAction="#onDeleteMovieClicked"/>
+            </HBox>
+
+            <Label fx:id="statusLabel" text="Готово" style="-fx-text-fill: #2563eb;"/>
+        </VBox>
+    </center>
+
+</BorderPane>

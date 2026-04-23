@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.moviehub.UserController"
+            prefWidth="1100.0" prefHeight="700.0">
+
+    <top>
+        <VBox spacing="10" style="-fx-padding: 18; -fx-background-color: #111827;">
+            <Label text="MovieHub - User" style="-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold;"/>
+            <HBox spacing="10">
+                <TextField fx:id="searchField" promptText="Поиск по названию..." prefWidth="320"/>
+                <ComboBox fx:id="genreBox" prefWidth="180"/>
+                <Button text="Мои данные" onAction="#onOpenLibraryClicked"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <left>
+        <VBox spacing="10" style="-fx-padding: 15; -fx-background-color: #f3f4f6;" prefWidth="320">
+            <Label text="Каталог фильмов" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <ListView fx:id="movieListView" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="12" style="-fx-padding: 20;">
+            <Label fx:id="titleLabel" text="Выберите фильм" style="-fx-font-size: 26px; -fx-font-weight: bold;"/>
+            <Label fx:id="genreLabel" text="Жанр:" style="-fx-font-size: 16px;"/>
+            <Label fx:id="yearLabel" text="Год:" style="-fx-font-size: 16px;"/>
+            <Label fx:id="ratingLabel" text="Рейтинг:" style="-fx-font-size: 16px;"/>
+
+            <Label text="Описание" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <TextArea fx:id="descriptionArea" editable="false" wrapText="true" prefRowCount="8"/>
+
+            <HBox spacing="10">
+                <Button text="Смотреть" onAction="#onWatchClicked"/>
+                <Button text="В избранное" onAction="#onFavoriteClicked"/>
+                <Button text="Смотреть позже" onAction="#onWatchLaterClicked"/>
+                <Button text="Оценить" onAction="#onRateClicked"/>
+            </HBox>
+
+            <Label fx:id="statusLabel" text="Готово к работе" style="-fx-font-size: 14px; -fx-text-fill: #2563eb;"/>
+        </VBox>
+    </center>
+
+</BorderPane>

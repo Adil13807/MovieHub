@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.moviehub.LibraryController"
+            prefWidth="700.0" prefHeight="500.0">
+
+    <top>
+        <VBox style="-fx-padding: 18; -fx-background-color: #111827;">
+            <Label text="Мои данные" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+        </VBox>
+    </top>
+
+    <center>
+        <HBox spacing="20" style="-fx-padding: 20;">
+            <VBox spacing="10" prefWidth="200">
+                <Label text="Избранное" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                <ListView fx:id="favoritesList"/>
+                <Button text="Удалить из избранного" onAction="#onRemoveFavoriteClicked"/>
+            </VBox>
+
+            <VBox spacing="10" prefWidth="200">
+                <Label text="Смотреть позже" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                <ListView fx:id="watchLaterList"/>
+                <Button text="Удалить" onAction="#onRemoveWatchLaterClicked"/>
+            </VBox>
+
+            <VBox spacing="10" prefWidth="200">
+                <Label text="История" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                <ListView fx:id="historyList"/>
+                <Button text="Очистить историю" onAction="#onClearHistoryClicked"/>
+            </VBox>
+        </HBox>
+    </center>
+
+</BorderPane>

@@ -1,0 +1,20 @@
+Inception;Sci-Fi;2010;8.8;История о воровстве идей во сне.;videos/inception.mp4
+Interstellar;Sci-Fi;2014;8.7;Путешествие через космос ради спасения человечества.;videos/interstellar.mp4
+The Dark Knight;Action;2008;9.0;Бэтмен против Джокера.;videos/dark_knight.mp4
+Avatar;Fantasy;2009;7.9;Новый мир, новые правила, новая война.;videos/avatar.mp4
+Titanic;Drama;1997;7.9;Любовь на фоне трагедии.;videos/titanic.mp4
+The Matrix;Sci-Fi;1999;8.7;Реальность — не то, чем кажется.;videos/matrix.mp4
+Joker;Drama;2019;8.4;Путь Артура Флека к безумию.;videos/joker.mp4
+Avengers: Endgame;Action;2019;8.4;Финал эпической битвы.;videos/endgame.mp4
+Spider-Man: No Way Home;Action;2021;8.2;Несколько вселенных сталкиваются.;videos/spiderman_nwh.mp4
+Toy Story;Animation;1995;8.3;Игрушки оживают, когда никто не видит.;videos/toy_story.mp4
+Coco;Animation;2017;8.4;Музыка, семья и память.;videos/coco.mp4
+The Godfather;Crime;1972;9.2;История семьи Корлеоне.;videos/godfather.mp4
+Fight Club;Drama;1999;8.8;Тайный клуб и разрушение личности.;videos/fight_club.mp4
+Forrest Gump;Drama;1994;8.8;Жизнь простого человека в необычное время.;videos/forrest_gump.mp4
+The Lion King;Animation;1994;8.5;Путь Симбы к своему месту в мире.;videos/lion_king.mp4
+Deadpool;Comedy;2016;8.0;Супергерой с очень странным чувством юмора.;videos/deadpool.mp4
+Guardians of the Galaxy;Action;2014;8.0;Команда очень разных героев.;videos/guardians.mp4
+Parasite;Thriller;2019;8.5;История о социальном неравенстве и тайнах.;videos/parasite.mp4
+Whiplash;Drama;2014;8.5;Музыка, давление и амбиции.;videos/whiplash.mp4
+Shrek;Comedy;2001;7.9;Огр, принцесса и очень необычное приключение.;videos/shrek.mp4

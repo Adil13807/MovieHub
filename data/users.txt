@@ -1,0 +1,7 @@
+1;1;USER
+admin1;admin123;ADMIN
+admin123;admin123;USER
+admin2;admin123;ADMIN
+Adil;qwe;USER
+admin3;admin123;ADMIN
+Adil123;123;USER
