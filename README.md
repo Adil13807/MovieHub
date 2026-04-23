@@ -1,10 +1,17 @@
 🎬 Movie Hub
+
 🚀 Features
+
 🎥 Watch movies offline from local folders
+
 📁 Scan and display movie catalog automatically
+
 🗂️ Simple and organized movie library
+
 💻 Modern desktop interface
+
 ⚡ Fast and lightweight performance
+
 ▶️ Easy movie playback
 🛠️ Technologies Used
 Java (core logic)
